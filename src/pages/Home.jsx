@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 
@@ -58,35 +58,52 @@ const reviews = [
 
 const CARDS_PER_VIEW = 3;
 
+// Simple scroll reveal hook
+const useScrollReveal = () => {
+  const [refs, setRefs] = useState([]);
+  
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('reveal-visible');
+          }
+        });
+      },
+      { threshold: 0.15 }
+    );
+
+    const elements = document.querySelectorAll('.reveal');
+    elements.forEach((el) => observer.observe(el));
+
+    return () => {
+      elements.forEach((el) => observer.unobserve(el));
+    };
+  }, []);
+
+  return refs;
+};
+
 const Home = () => {
   const [reviewIndex, setReviewIndex] = useState(0);
   const maxIndex = reviews.length - CARDS_PER_VIEW;
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
-  // Create refs for each section
-  const heroRef = useRef(null);
-  const menuRef = useRef(null);
-  const downloadRef = useRef(null);
-  const testimonialsRef = useRef(null);
-
   const handlePrev = () => setReviewIndex((prev) => Math.max(prev - 1, 0));
   const handleNext = () => setReviewIndex((prev) => Math.min(prev + 1, maxIndex));
   const visibleReviews = reviews.slice(reviewIndex, reviewIndex + CARDS_PER_VIEW);
 
-  // Scroll to section function
-  const scrollToSection = (ref) => {
-    if (ref && ref.current) {
-      ref.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
+  // Initialize scroll reveal
+  useScrollReveal();
 
   return (
-    <div className="min-h-screen bg-red-50 font-sans antialiased">
+    <div className="min-h-screen bg-red-50 font-sans antialiased overflow-x-hidden">
 
       {/* ========== NAVBAR ========== */}
-      <nav className="sticky top-0 z-50 flex h-[90px] items-center justify-between bg-red-50 px-6 md:px-10 lg:px-20 xl:px-[120px] ">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => scrollToSection(heroRef)}>
+      <nav className="sticky top-0 z-50 flex h-[90px] items-center justify-between bg-red-50/95 backdrop-blur-sm px-6 md:px-10 lg:px-20 xl:px-[120px]">
+        <div className="flex items-center gap-2">
           <svg width="34" height="40" viewBox="0 0 34 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-8 w-7 md:h-10 md:w-9">
             <path d="M17 2C13 11 6 15 6 24C6 32.3 11 38 17 38C23 38 28 32.3 28 24C28 15 21 11 17 2Z" fill="#EF4444" />
             <path d="M17 13C14.5 18.5 13 22 13 26C13 29.3 14.8 32 17 32C19.2 32 21 29.3 21 26C21 22 19.5 18.5 17 13Z" fill="#FF8C00" />
@@ -94,21 +111,15 @@ const Home = () => {
           <span className="text-xl font-bold text-gray-900 md:text-2xl">Foody</span>
         </div>
         <div className="hidden items-center gap-6 md:flex lg:gap-8">
-          <button onClick={() => scrollToSection(heroRef)} className="text-sm font-medium text-gray-900 transition-colors hover:text-red-500 md:text-base cursor-pointer bg-transparent border-none">
-            Home
-          </button>
-          <button onClick={() => scrollToSection(menuRef)} className="text-sm font-medium text-gray-900 transition-colors hover:text-red-500 md:text-base cursor-pointer bg-transparent border-none">
-            Service
-          </button>
-          <button onClick={() => scrollToSection(menuRef)} className="flex items-center gap-1 text-sm font-medium text-gray-900 transition-colors hover:text-red-500 md:text-base cursor-pointer bg-transparent border-none">
+          <a href="#" className="text-sm font-medium text-gray-900 transition-colors hover:text-red-500 md:text-base">Home</a>
+          <a href="#" className="text-sm font-medium text-gray-900 transition-colors hover:text-red-500 md:text-base">Service</a>
+          <a href="#" className="flex items-center gap-1 text-sm font-medium text-gray-900 transition-colors hover:text-red-500 md:text-base">
             Menu
             <svg width="11" height="7" viewBox="0 0 11 7" fill="none">
               <path d="M1 1L5.5 6L10 1" stroke="#111827" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-          </button>
-          <button onClick={() => scrollToSection(testimonialsRef)} className="text-sm font-medium text-gray-900 transition-colors hover:text-red-500 md:text-base cursor-pointer bg-transparent border-none">
-            Help
-          </button>
+          </a>
+          <a href="#" className="text-sm font-medium text-gray-900 transition-colors hover:text-red-500 md:text-base">Help</a>
         </div>
         <div className="flex items-center gap-4 md:gap-6">
           <button className="cursor-pointer border-none bg-transparent p-0">
@@ -126,7 +137,7 @@ const Home = () => {
           {user ? (
             <button
               onClick={logout}
-              className="flex cursor-pointer items-center gap-2 rounded-full border-none bg-red-500 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-red-500/20 transition-opacity hover:opacity-90 md:px-6 md:text-base"
+              className="flex cursor-pointer items-center gap-2 rounded-full border-none bg-red-500 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-red-500/20 transition-all hover:shadow-lg hover:scale-105 md:px-6 md:text-base"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
                 <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
@@ -138,7 +149,7 @@ const Home = () => {
           ) : (
             <button
               onClick={() => navigate('/login')}
-              className="flex cursor-pointer items-center gap-2 rounded-full border-none bg-red-500 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-red-500/20 transition-opacity hover:opacity-90 md:px-6 md:text-base"
+              className="flex cursor-pointer items-center gap-2 rounded-full border-none bg-red-500 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-red-500/20 transition-all hover:shadow-lg hover:scale-105 md:px-6 md:text-base"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
                 <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4" />
@@ -152,9 +163,9 @@ const Home = () => {
       </nav>
 
       {/* ========== HERO SECTION ========== */}
-      <div ref={heroRef} className="mx-auto max-w-7xl px-6 md:px-10 lg:px-12 xl:px-16 pt-10">
+      <div className="mx-auto max-w-7xl px-6 md:px-10 lg:px-12 xl:px-16">
         <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12">
-          <div className="z-10 order-2 lg:order-1 lg:col-span-7">
+          <div className="z-10 order-2 lg:order-1 lg:col-span-7 reveal">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-red-100/70 px-4 py-2 shadow-sm">
               <span className="text-sm font-semibold text-gray-900 md:text-base">Fast Delivery</span>
               <span className="text-base">🛵</span>
@@ -162,7 +173,7 @@ const Home = () => {
             <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl md:text-6xl lg:text-[68px] lg:leading-[1.1]">
               Fastest <br />
               <span className="text-red-500">Delivery</span> &amp; <br />
-              Esay <span className="text-red-500">Pickup.</span>
+              Easy <span className="text-red-500">Pickup.</span>
             </h1>
             <p className="mt-5 text-sm leading-relaxed text-gray-500 sm:text-base md:text-lg">
               Lorem ipsum dolor sit amet, consectetur adipiscing elit.{" "}
@@ -170,11 +181,11 @@ const Home = () => {
               Imperdiet tempus felis vitae sit est quisque.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-6">
-              <button className="rounded-full bg-red-500 px-8 py-4 text-sm font-semibold text-white shadow-lg shadow-red-500/30 transition-all hover:opacity-90 md:text-base">
+              <button className="rounded-full bg-red-500 px-8 py-4 text-sm font-semibold text-white shadow-lg shadow-red-500/30 transition-all hover:shadow-xl hover:scale-105 md:text-base">
                 Order Now
               </button>
-              <button className="group flex cursor-pointer items-center gap-3 border-none bg-transparent font-semibold text-gray-900">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-red-500 bg-white shadow-md transition-transform group-hover:scale-105">
+              <button className="group flex cursor-pointer items-center gap-3 border-none bg-transparent font-semibold text-gray-900 transition-all hover:gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-red-500 bg-white shadow-md transition-transform group-hover:scale-110">
                   <svg width="12" height="14" viewBox="0 0 13 15" fill="#EF4444" className="translate-x-0.5">
                     <polygon points="1,1 12,7.5 1,14" />
                   </svg>
@@ -217,44 +228,34 @@ const Home = () => {
             </div>
           </div>
 
-          <div className="relative order-1 flex items-center justify-center lg:order-2 lg:col-span-5 h-[780px] sm:h-[550px] lg:h-[620px]">
-  
-{/* RIGHT VISUAL */}
-<div className="relative order-1  flex items-center justify-center lg:order-2 lg:col-span-5 h-[480px] sm:h-[550px] lg:h-[620px]">
-  
-  {/* Red Circle Background Container (Without overflow-hidden) */}
-  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[620px] w-[620px] sm:h-[460px] sm:w-[460px] lg:h-[540px] lg:w-[560px] rounded-full bg-red-500 shadow-lg z-0"></div>
-
-  {/* Person Image positioned to pop out of the top of the circle */}
-  <img 
-    src="/src/assets/man.png" 
-    alt="Person with burger" 
-    className="absolute bottom-[-15px] left-1/2 -translate-x-1/2 -translate-y-20 z-10 object-cover object-down pointer-events-none max-w-none" 
-    style={{ height: "620px", width: "550px" }} 
-  />
-
-
-</div>
-  {/* Floating Burger Card */}
-  <div className="absolute bottom-2 right-2 sm:left-60 z-20 flex w-[210px] items-center gap-3 rounded-2xl bg-white/95 p-3.5 shadow-2xl backdrop-blur-sm md:w-[240px] md:p-4">
-    <span className="text-3xl md:text-4xl">🍔</span>
-    <div>
-      <p className="text-xs font-bold leading-tight text-gray-900 md:text-sm">Quarter Pounder with <br />Cheese</p>
-      <div className="mt-1 flex gap-0.5">
-        {[1, 2, 3, 4].map((s) => (<span key={s} className="text-xs text-yellow-400">★</span>))}
-        <span className="text-xs text-gray-200">★</span>
-      </div>
-    </div>
-  </div>
-
-</div>
+          <div className="relative order-1 flex items-center justify-center lg:order-2 lg:col-span-5 h-[780px] sm:h-[550px] lg:h-[620px] reveal">
+            <div className="relative order-1 flex items-center justify-center lg:order-2 lg:col-span-5 h-[480px] sm:h-[550px] lg:h-[620px]">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[620px] w-[620px] sm:h-[460px] sm:w-[460px] lg:h-[540px] lg:w-[560px] rounded-full bg-red-500 shadow-lg z-0"></div>
+              <img 
+                src="/src/assets/man.png" 
+                alt="Person with burger" 
+                className="absolute bottom-[-15px] left-1/2 -translate-x-1/2 -translate-y-20 z-10 object-cover object-down pointer-events-none max-w-none" 
+                style={{ height: "620px", width: "550px" }} 
+              />
+            </div>
+            <div className="absolute bottom-2 right-2 sm:left-60 z-20 flex w-[210px] items-center gap-3 rounded-2xl bg-white/95 p-3.5 shadow-2xl backdrop-blur-sm transition-all hover:scale-105 md:w-[240px] md:p-4">
+              <span className="text-3xl md:text-4xl">🍔</span>
+              <div>
+                <p className="text-xs font-bold leading-tight text-gray-900 md:text-sm">Quarter Pounder with <br />Cheese</p>
+                <div className="mt-1 flex gap-0.5">
+                  {[1, 2, 3, 4].map((s) => (<span key={s} className="text-xs text-yellow-400">★</span>))}
+                  <span className="text-xs text-gray-200">★</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* ========== SPECIAL MENU SECTION ========== */}
-      <section ref={menuRef} className="bg-red-50 px-4 py-14 sm:px-6 md:px-10 lg:py-20">
+      <section className="bg-red-50 px-4 py-14 sm:px-6 md:px-10 lg:py-20">
         <div className="mx-auto w-full max-w-[1140px]">
-          <div className="mb-10 text-center lg:mb-14">
+          <div className="mb-10 text-center lg:mb-14 reveal">
             <h2 className="font-bold text-gray-900" style={{ fontFamily: "Outfit, sans-serif", fontSize: "clamp(26px, 4vw, 40px)", lineHeight: "100%" }}>
               Special Menu for you
             </h2>
@@ -263,11 +264,15 @@ const Home = () => {
             </p>
           </div>
           <div className="grid grid-cols-2 gap-4 sm:gap-5 md:grid-cols-3 lg:grid-cols-4 lg:gap-6">
-            {menuItems.map((item) => (
-              <div key={item.id} className="group flex flex-col overflow-hidden rounded-[20px] bg-white shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+            {menuItems.map((item, index) => (
+              <div 
+                key={item.id} 
+                className="group flex flex-col overflow-hidden rounded-[20px] bg-white shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-2 reveal"
+                style={{ transitionDelay: `${index * 100}ms` }}
+              >
                 <div className="relative overflow-hidden" style={{ height: "150px", borderTopLeftRadius: "20px", borderTopRightRadius: "20px" }}>
-                  <img src={item.image} alt={item.name} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
-                  <button className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md transition-transform hover:scale-110" aria-label="Wishlist">
+                  <img src={item.image} alt={item.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                  <button className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md transition-all hover:scale-110" aria-label="Wishlist">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                     </svg>
@@ -301,10 +306,10 @@ const Home = () => {
       </section>
 
       {/* ========== DOWNLOAD APP SECTION ========== */}
-      <section ref={downloadRef} className="bg-red-50 px-4 py-10 sm:px-6 md:px-10 lg:py-0">
+      <section className="bg-red-50 px-4 py-10 sm:px-6 md:px-10 lg:py-0">
         <div className="mx-auto max-w-[1140px]">
           <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-0">
-            <div className="flex flex-col justify-center pl-0 pt-10 lg:pl-10 lg:pt-10" style={{ maxWidth: "503px" }}>
+            <div className="flex flex-col justify-center pl-0 pt-10 lg:pl-10 lg:pt-10 reveal" style={{ maxWidth: "503px" }}>
               <h2 className="font-extrabold text-gray-900" style={{ fontFamily: "Outfit, sans-serif", fontSize: "clamp(26px, 3.5vw, 38px)", lineHeight: "1.2" }}>
                 Download our Mobile App
               </h2>
@@ -312,7 +317,7 @@ const Home = () => {
                 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Luctus cum purus bibendum risus nibh cursus integer dolor, commodo. Amet, aliquam condimentum.
               </p>
               <div className="mt-8 flex flex-wrap items-center gap-4">
-                <button className="flex cursor-pointer items-center gap-3 rounded-xl border-none bg-gray-900 px-5 text-white transition-opacity hover:opacity-85" style={{ width: "clamp(160px, 20vw, 236px)", height: "70px" }}>
+                <button className="flex cursor-pointer items-center gap-3 rounded-xl border-none bg-gray-900 px-5 text-white transition-all hover:scale-105 hover:shadow-xl" style={{ width: "clamp(160px, 20vw, 236px)", height: "70px" }}>
                   <svg width="28" height="28" viewBox="0 0 24 24" fill="white">
                     <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
                   </svg>
@@ -321,7 +326,7 @@ const Home = () => {
                     <p className="text-base font-bold">App Store</p>
                   </div>
                 </button>
-                <button className="flex cursor-pointer items-center gap-3 rounded-xl border border-gray-200 bg-white px-5 text-gray-900 shadow-sm transition-opacity hover:opacity-85" style={{ height: "70px", minWidth: "160px" }}>
+                <button className="flex cursor-pointer items-center gap-3 rounded-xl border border-gray-200 bg-white px-5 text-gray-900 shadow-sm transition-all hover:scale-105 hover:shadow-lg" style={{ height: "70px", minWidth: "160px" }}>
                   <svg width="26" height="26" viewBox="0 0 24 24">
                     <path d="M3.18 23.76c.35.2.76.22 1.14.04l11.34-6.54-2.56-2.56-9.92 9.06z" fill="#EA4335" />
                     <path d="M22.47 10.2L19.7 8.6l-2.87 2.87 2.87 2.87 2.8-1.62a1.6 1.6 0 000-2.52z" fill="#FBBC04" />
@@ -335,13 +340,13 @@ const Home = () => {
                 </button>
               </div>
             </div>
-            <div className="relative mx-auto flex items-end justify-center lg:mx-0 lg:justify-end" style={{ height: "clamp(380px, 50vw, 611px)", width: "100%" }}>
-              <div className="absolute z-0" style={{ width: "clamp(150px, 20vw, 269px)", height: "clamp(300px, 40vw, 544px)", right: "0", bottom: "0" }}>
+            <div className="relative mx-auto flex items-end justify-center lg:mx-0 lg:justify-end reveal" style={{ height: "clamp(380px, 50vw, 611px)", width: "100%" }}>
+              <div className="absolute z-0 transition-all hover:scale-105" style={{ width: "clamp(150px, 20vw, 269px)", height: "clamp(300px, 40vw, 544px)", right: "0", bottom: "0" }}>
                 <div className="h-full w-full overflow-hidden rounded-[32px] border-4 border-gray-200 bg-gray-100 shadow-xl" style={{ borderRadius: "36px" }}>
                   <img src="/src/assets/mobile2.png" alt="" className="h-full w-full object-cover" />
                 </div>
               </div>
-              <div className="absolute z-10" style={{ width: "clamp(150px, 20vw, 269px)", height: "clamp(300px, 40vw, 544px)", right: "clamp(100px, 22vw, 170px)", top: "clamp(80px, 19vw, 170px)" }}>
+              <div className="absolute z-10 transition-all hover:scale-105 hover:rotate-3" style={{ width: "clamp(150px, 20vw, 269px)", height: "clamp(300px, 40vw, 544px)", right: "clamp(100px, 22vw, 170px)", top: "clamp(80px, 19vw, 170px)" }}>
                 <div className="h-full w-full overflow-hidden border-4 border-gray-800 bg-white shadow-2xl" style={{ borderRadius: "36px" }}>
                   <img src="/src/assets/mobile1.png" alt="" className="h-full w-full object-cover" />
                 </div>
@@ -353,9 +358,9 @@ const Home = () => {
       </section>
 
       {/* ========== TESTIMONIALS SECTION ========== */}
-      <section ref={testimonialsRef} className="bg-red-50 px-4 py-14 sm:px-6 md:px-10 lg:py-20">
+      <section className="bg-red-50 px-4 py-14 sm:px-6 md:px-10 lg:py-20">
         <div className="mx-auto w-full max-w-[1140px]">
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start justify-between gap-4 reveal">
             <h2
               className="font-bold text-gray-900"
               style={{ fontFamily: "Outfit, sans-serif", fontSize: "clamp(24px, 3.5vw, 40px)", lineHeight: "1.2", maxWidth: "560px" }}
@@ -366,7 +371,7 @@ const Home = () => {
               <button
                 onClick={handlePrev}
                 disabled={reviewIndex === 0}
-                className="flex items-center justify-center rounded-full transition-all hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex items-center justify-center rounded-full transition-all hover:scale-110 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
                 style={{ width: "50px", height: "50px", backgroundColor: "#fde8e8", border: "none" }}
                 aria-label="Previous"
               >
@@ -377,7 +382,7 @@ const Home = () => {
               <button
                 onClick={handleNext}
                 disabled={reviewIndex >= maxIndex}
-                className="flex items-center justify-center rounded-full transition-all hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex items-center justify-center rounded-full transition-all hover:scale-110 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
                 style={{ width: "50px", height: "50px", backgroundColor: "rgba(245, 71, 73, 1)", border: "none", boxShadow: "0 4px 14px rgba(245,71,73,0.35)" }}
                 aria-label="Next"
               >
@@ -389,8 +394,12 @@ const Home = () => {
           </div>
 
           <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
-            {visibleReviews.map((review) => (
-              <div key={review.id} className="flex flex-col justify-between rounded-2xl bg-white p-6 shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl" style={{ minHeight: "300px" }}>
+            {visibleReviews.map((review, index) => (
+              <div 
+                key={review.id} 
+                className="flex flex-col justify-between rounded-2xl bg-white p-6 shadow-md transition-all duration-300 hover:-translate-y-2 hover:shadow-xl reveal"
+                style={{ minHeight: "300px", transitionDelay: `${index * 100}ms` }}
+              >
                 <div>
                   <div className="mb-4 flex gap-1">
                     {[1, 2, 3, 4, 5].map((s) => (
@@ -405,7 +414,7 @@ const Home = () => {
                   <img
                     src={review.avatar}
                     alt={review.name}
-                    className="h-11 w-11 rounded-full object-cover shadow-sm ring-2 ring-red-100"
+                    className="h-11 w-11 rounded-full object-cover shadow-sm ring-2 ring-red-100 transition-all hover:ring-4"
                     onError={(e) => { e.target.style.display = "none"; e.target.nextSibling.style.display = "flex"; }}
                   />
                   <div className="hidden h-11 w-11 items-center justify-center rounded-full bg-red-100 text-sm font-bold text-red-500">
@@ -425,7 +434,7 @@ const Home = () => {
               <button
                 key={i}
                 onClick={() => setReviewIndex(i)}
-                className="rounded-full transition-all duration-300"
+                className="rounded-full transition-all duration-300 hover:scale-110"
                 style={{ width: reviewIndex === i ? "24px" : "8px", height: "8px", backgroundColor: reviewIndex === i ? "rgba(245, 71, 73, 1)" : "#fca5a5", border: "none", cursor: "pointer" }}
                 aria-label={`Go to slide ${i + 1}`}
               />
@@ -444,13 +453,11 @@ const Home = () => {
             style={{
               backgroundColor: "white",
               minHeight: "130px",
-            
             }}
           >
             {/* Logo */}
             <div
-              className="flex shrink-0 items-center gap-2 cursor-pointer"
-              onClick={() => scrollToSection(heroRef)}
+              className="flex shrink-0 items-center gap-2 transition-all hover:scale-105"
               style={{ width: "129px", height: "50px" }}
             >
               <svg width="32" height="38" viewBox="0 0 34 40" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -462,42 +469,36 @@ const Home = () => {
 
             {/* Nav Links */}
             <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8 lg:gap-[60px]">
-              <button onClick={() => scrollToSection(heroRef)} className="text-sm font-medium transition-colors hover:text-red-400 md:text-base bg-transparent border-none cursor-pointer" style={{ color: "rgba(2, 0, 0, 0.85)" }}>
-                Home
-              </button>
-              <button onClick={() => scrollToSection(menuRef)} className="text-sm font-medium transition-colors hover:text-red-400 md:text-base bg-transparent border-none cursor-pointer" style={{ color: "rgba(2, 0, 0, 0.85)" }}>
-                Service
-              </button>
-              <button onClick={() => scrollToSection(menuRef)} className="text-sm font-medium transition-colors hover:text-red-400 md:text-base bg-transparent border-none cursor-pointer" style={{ color: "rgba(2, 0, 0, 0.85)" }}>
-                Blog
-              </button>
-              <button onClick={() => scrollToSection(testimonialsRef)} className="text-sm font-medium transition-colors hover:text-red-400 md:text-base bg-transparent border-none cursor-pointer" style={{ color: "rgba(2, 0, 0, 0.85)" }}>
-                Contact Us
-              </button>
+              {["About", "Service", "Blog", "Contact Us"].map((link) => (
+                <a
+                  key={link}
+                  href="#"
+                  className="text-sm font-medium transition-all hover:text-red-500 hover:scale-110 md:text-base"
+                  style={{ color: "rgba(2, 0, 0, 0.85)", textDecoration: "none" }}
+                >
+                  {link}
+                </a>
+              ))}
             </div>
 
             {/* Social Icons */}
             <div className="flex items-center gap-5">
-              {/* Twitter / X */}
-              <a href="#" className="transition-opacity hover:opacity-70" aria-label="Twitter">
+              <a href="#" className="transition-all hover:scale-125 hover:opacity-70" aria-label="Twitter">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="black">
                   <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                 </svg>
               </a>
-              {/* Facebook */}
-              <a href="#" className="transition-opacity hover:opacity-70" aria-label="Facebook">
+              <a href="#" className="transition-all hover:scale-125 hover:opacity-70" aria-label="Facebook">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="black">
                   <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                 </svg>
               </a>
-              {/* Instagram */}
-              <a href="#" className="transition-opacity hover:opacity-70" aria-label="Instagram">
+              <a href="#" className="transition-all hover:scale-125 hover:opacity-70" aria-label="Instagram">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="black">
                   <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
                 </svg>
               </a>
-              {/* GitHub */}
-              <a href="#" className="transition-opacity hover:opacity-70" aria-label="GitHub">
+              <a href="#" className="transition-all hover:scale-125 hover:opacity-70" aria-label="GitHub">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="black">
                   <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
                 </svg>
@@ -510,7 +511,6 @@ const Home = () => {
 
           {/* ── Bottom Bar ── */}
           <div className="flex flex-col items-center justify-between gap-3 py-5 sm:flex-row">
-            {/* Copyright */}
             <p
               className="text-center text-gray-500 sm:text-left"
               style={{
@@ -523,11 +523,10 @@ const Home = () => {
               © Copyright 2022, All Rights Reserved
             </p>
 
-            {/* Policy Links */}
             <div className="flex items-center gap-6 sm:gap-8">
               <a
                 href="#"
-                className="transition-colors hover:text-red-500"
+                className="transition-all hover:text-red-500 hover:scale-105"
                 style={{
                   fontFamily: "Outfit, sans-serif",
                   fontSize: "16px",
@@ -541,7 +540,7 @@ const Home = () => {
               </a>
               <a
                 href="#"
-                className="transition-colors hover:text-red-500"
+                className="transition-all hover:text-red-500 hover:scale-105"
                 style={{
                   fontFamily: "Outfit, sans-serif",
                   fontSize: "16px",
@@ -558,6 +557,20 @@ const Home = () => {
 
         </div>
       </footer>
+
+      {/* ========== SCROLL REVEAL STYLES ========== */}
+      <style jsx>{`
+        .reveal {
+          opacity: 0;
+          transform: translateY(30px);
+          transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .reveal-visible {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      `}</style>
 
     </div>
   );
